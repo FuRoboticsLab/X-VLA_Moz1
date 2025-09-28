@@ -87,6 +87,3 @@ class InfiniteDataReader(IterableDataset):
             while True:
                 i = random.choices(range(len(names)), weights=ws, k=1)[0]
                 yield next(gens[i])
-
-
-

@@ -10,12 +10,10 @@ import torch.backends.cudnn as cudnn
 from pathlib import Path
 import subprocess
 from accelerate import Accelerator
-from dataset import create_dataloader
-import model
-from timm import create_model
+from datasets import create_dataloader
+from xvla import xvla
 from safetensors.torch import load_file
 from accelerate.utils import DistributedDataParallelKwargs
-import torch.nn.functional as F
 
 def submit_openloop_job(model, ckpt_path, output_dir):
     job_script = f"""#!/bin/bash
@@ -81,7 +79,8 @@ def main(args):
                               project_dir=output_dir, kwargs_handlers=[kwargs])
     accelerator.init_trackers("HFP_Training")
     torch.distributed.barrier()
-    model, text_processor, _ = create_model(args.model)
+    model = xvla(pretrained = args.pretrained)
+    text_processor = model.text_preprocessor
     if args.pretrained is not None:
         accelerator.print('>>>>>> load pretrain from {}'.format(args.pretrained))
         print(model.load_state_dict(load_file(args.pretrained), strict=False))

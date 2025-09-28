@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Optional, Tuple, Iterable
 import numpy as np
 import h5py
-
+import random
 from datasets.common import quat_to_rotate6d
 from .base import BaseHDF5Handler
 
@@ -51,15 +51,18 @@ class AIRAgilexHQHandler(BaseHDF5Handler):
     ) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray], Optional[np.ndarray], float, float]:
         freq, qdur = 30.0, 2.0
         eef = f["observations"]["eef_6d"][()]  # [T,20]
-        left, right = eef[:, :10].copy(), eef[:, 10:].copy()
+        left, right = eef[:, :10], eef[:, 10:]
         left[:,  -1] = (left[:,  -1] * 50 < 1.0)
         right[:, -1] = (right[:, -1] * 50 < 1.0)
         lt = f["/observations/eef_left_time"][()]
         rt = f["/observations/eef_right_time"][()]
+        f.close()
         return left, right, lt, rt, freq, qdur
 
     def index_candidates(self, T_left: int, training: bool) -> Iterable[int]:
-        return range(0, max(0, T_left - 30), 2)
+        index =  list(range(0, max(0, T_left - 30)))
+        if training: random.shuffle(index)
+        return index[:400]
 
 
 class AIRBotHandler(BaseHDF5Handler):

@@ -13,10 +13,6 @@ from mmengine import fileio
 from PIL import Image
 from scipy.interpolate import interp1d
 
-
-
-
-
 class DomainHandler(ABC):
     """
     Minimal domain handler interface.
@@ -70,7 +66,7 @@ class BaseHDF5Handler(DomainHandler):
     # --- Optional overrides -------------------------------------------------
     def get_image_datasets(self, f: h5py.File) -> Sequence[Any]:
         keys: Sequence[str] = self.meta["observation_key"]
-        return [f[k] for k in keys]
+        return [f[k][()] for k in keys]
 
     def read_instruction(self, f: h5py.File) -> str:
         key: str = self.meta["language_instruction_key"]
@@ -110,50 +106,50 @@ class BaseHDF5Handler(DomainHandler):
         with _open_h5(datapath) as f:
             # Images and mask
             images = self.get_image_datasets(f)
-            image_mask = torch.zeros(self.num_views, dtype=torch.bool)
-            image_mask[: len(images)] = True
-
             # Domain-specific kinematics and timing
             left, right, lt, rt, freq, qdur = self.build_left_right(f)
-            if lt is None: lt = np.arange(left.shape[0], dtype=np.float64) / float(freq)
-            if rt is None: rt = np.arange(right.shape[0], dtype=np.float64) / float(freq)
+        
+        image_mask = torch.zeros(self.num_views, dtype=torch.bool)
+        image_mask[: len(images)] = True
+        if lt is None: lt = np.arange(left.shape[0], dtype=np.float64) / float(freq)
+        if rt is None: rt = np.arange(right.shape[0], dtype=np.float64) / float(freq)
 
-            # Language
-            ins = self.read_instruction(f)
+        # Language
+        ins = self.read_instruction(f)
 
-            # Candidate indices (optionally shuffled)
-            idxs = list(self.index_candidates(left.shape[0], training))
-            if training: random.shuffle(idxs)
+        # Candidate indices (optionally shuffled)
+        idxs = list(self.index_candidates(left.shape[0], training))
+        if training: random.shuffle(idxs)
 
-            # Interpolators; clamp to endpoints
-            L = interp1d(lt, left, axis=0, bounds_error=False, fill_value=(left[0], left[-1]))
-            R = interp1d(rt, right, axis=0, bounds_error=False, fill_value=(right[0], right[-1]))
-            ref = (lt + rt) / 2.0
+        # Interpolators; clamp to endpoints
+        L = interp1d(lt, left, axis=0, bounds_error=False, fill_value=(left[0], left[-1]))
+        R = interp1d(rt, right, axis=0, bounds_error=False, fill_value=(right[0], right[-1]))
+        ref = (lt + rt) / 2.0
 
-            V = min(self.num_views, len(images))
-            for idx in idxs:
+        V = min(self.num_views, len(images))
+        for idx in idxs:
 
-                # Query future window
-                cur = ref[idx]
-                q = np.linspace(cur, min(cur + qdur, float(ref.max())), num_actions + 1, dtype=np.float32)
-                lseq = torch.tensor(L(q))
-                rseq = torch.tensor(R(q))
+            # Query future window
+            cur = ref[idx]
+            q = np.linspace(cur, min(cur + qdur, float(ref.max())), num_actions + 1, dtype=np.float32)
+            lseq = torch.tensor(L(q))
+            rseq = torch.tensor(R(q))
 
-                # Skip static segments
-                if (lseq[1] - lseq[0]).abs().max() < 1e-5 and (rseq[1] - rseq[0]).abs().max() < 1e-5: continue
-                
-                # Language augmentation
-                if training and lang_aug_map and ins in lang_aug_map:
-                    ins = random.choice(lang_aug_map[ins])
-                
-                imgs = [image_aug(self._pil_from_arr(images[v][idx])) for v in range(V)]
-                while len(imgs) < self.num_views: imgs.append(torch.zeros_like(imgs[0]))
-                image_input = torch.stack(imgs, dim=0)
+            # Skip static segments
+            if (lseq[1] - lseq[0]).abs().max() < 1e-5 and (rseq[1] - rseq[0]).abs().max() < 1e-5: continue
+            
+            # Language augmentation
+            if training and lang_aug_map and ins in lang_aug_map:
+                ins = random.choice(lang_aug_map[ins])
+            
+            imgs = [image_aug(self._pil_from_arr(images[v][idx])) for v in range(V)]
+            while len(imgs) < self.num_views: imgs.append(torch.zeros_like(imgs[0]))
+            image_input = torch.stack(imgs, dim=0)
 
-                yield {
-                    "language_instruction": ins,
-                    "image_input": image_input,
-                    "image_mask": image_mask,
-                    "abs_trajectory": torch.cat([lseq, rseq], -1).float()
-                }
+            yield {
+                "language_instruction": ins,
+                "image_input": image_input,
+                "image_mask": image_mask,
+                "abs_trajectory": torch.cat([lseq, rseq], -1).float()
+            }
 

@@ -1,6 +1,17 @@
 # ------------------------------------------------------------------------------
 # Copyright (c) 2022–∞, 2toINF
-# Licensed under the Apache License, Version 2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0∂
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 # ------------------------------------------------------------------------------
 
 from __future__ import annotations
@@ -49,7 +60,7 @@ class XVLA(nn.Module):
 
     def __init__(
         self,
-        encoder_name: str = "microsoft/Florence-2-base",
+        encoder_name: str = "microsoft/Florence-2-large",
         *,
         depth: int = 24,
         hidden_size: int = 1024,
@@ -98,11 +109,10 @@ class XVLA(nn.Module):
         }, "Only microsoft/Florence-2-base and microsoft/Florence-2-large are supported."
         self.vlm = AutoModelForCausalLM.from_pretrained(
             encoder_name,
-            low_cpu_mem_usage=True,
             torch_dtype="auto",
-            trust_remote_code=True
+            trust_remote_code=True,
+            local_files_only=True
         )
-
         # Remove decoder-specific components to reduce memory and ensure we only
         # use encoder pathways. Guard these in case internals change.
         if hasattr(self.vlm, "language_model"):
@@ -130,7 +140,7 @@ class XVLA(nn.Module):
         
 
         # I/O preprocessors (implementations are project-specific)
-        self.text_preprocessor = LanguagePreprocessor(encoder_name="microsoft/Florence-2-large")
+        self.text_preprocessor = LanguagePreprocessor(encoder_name=encoder_name)
         self.image_preprocessor = ImagePreprocessor()
 
         self.app: FastAPI | None = None
