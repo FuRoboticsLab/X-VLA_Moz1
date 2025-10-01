@@ -1,0 +1,60 @@
+Log file created at: 2025/10/01 17:54:52
+Running on machine: localhost.localdomain
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I1001 17:54:52.747046 19370 dylog_impl.cpp:626] [DYLOG] soc num : 0W
+I1001 17:54:52.747076 19370 dylog_impl.cpp:631] [DYLOG] can't read scene_mode, use sud
+W1001 17:54:52.747103 19370 dylog_impl.cpp:693] [DYLOG] can't find available json config file with path : /home/agi/app/conf/scene_server/dylog_sud_default.json, use default.
+I1001 17:54:52.747195 19370 dylog_impl.cpp:251] [DYLOG] register dsd_name : dylog/python3.10/cosine_internal
+I1001 17:54:53.000607 19370 init.cpp:57] [cosine_internal]Register exit handle succ.
+I1001 17:54:53.000696 19370 scheduler_classic.cpp:28] [cosine_internal]Proc number set to be: 1
+I1001 17:54:53.001039 19411 processor.cpp:32] [cosine_internal]processor_tid: 19411
+I1001 17:54:53.000965 19370 cosine_bus_manager.cpp:107] [cosine_internal][CosineBusManager] initial cosine_bus_config:
+I1001 17:54:53.001289 19370 cosine_bus_global_sync.cpp:30] [cosine_internal][BusGlobalSync] set default middleware name:aorta
+I1001 17:54:53.023787 19370 dynamic_object.cpp:212] [cosine_internal][DynamicObject] open libdynamic_aorta.so success.
+W1001 17:54:53.023837 19370 aorta_component.cpp:91] [cosine_internal]Environment variable [LOCATOR_IP/DDS_IP] not set, fallback to 192.168.100.21
+I1001 17:54:53.023844 19370 aorta_component.cpp:426] [cosine_internal][AortaComponent] locator_ip: 192.168.100.21; Check network before domain init 
+E1001 17:54:53.024222 19370 ptp_clock.cpp:128] [cosine_internal]No valid PTP device found
+I1001 17:54:53.024258 19370 clock.cpp:207] [cosine_internal]PTP time is UTC time now
+E1001 17:54:53.024278 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:54:54.026749 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:54:55.029321 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:54:56.031756 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:54:57.034044 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:54:58.038468 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:54:59.041208 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:00.043534 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:01.045720 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:02.047701 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:03.050460 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:04.053119 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:05.056334 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:06.058266 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:07.060895 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:08.063030 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:09.065076 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:10.067320 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:11.071610 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:12.073613 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:13.075685 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:14.077852 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:15.080360 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:16.082597 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:17.086210 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:18.088406 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:19.092012 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:20.094216 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:21.097621 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:22.099771 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:23.104189 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:24.106427 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:25.108709 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:26.111074 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:27.113170 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:28.115389 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:29.119750 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:30.122110 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:31.124248 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:32.126543 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:33.129015 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:34.131377 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21
+E1001 17:55:35.135504 19370 aorta_component.cpp:448] [cosine_internal][AortaComponent] Network not ready. please check locator_ip: 192.168.100.21

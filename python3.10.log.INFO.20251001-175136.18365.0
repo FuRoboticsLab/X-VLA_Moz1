@@ -1,0 +1,7 @@
+Log file created at: 2025/10/01 17:51:36
+Running on machine: localhost.localdomain
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I1001 17:51:36.789424 18365 dylog_impl.cpp:626] [DYLOG] soc num : 0W
+I1001 17:51:36.789458 18365 dylog_impl.cpp:631] [DYLOG] can't read scene_mode, use sud
+W1001 17:51:36.789487 18365 dylog_impl.cpp:693] [DYLOG] can't find available json config file with path : /home/agi/app/conf/scene_server/dylog_sud_default.json, use default.
+I1001 17:51:36.789614 18365 dylog_impl.cpp:251] [DYLOG] register dsd_name : dylog/python3.10/cosine_internal
