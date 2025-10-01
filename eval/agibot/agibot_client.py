@@ -237,12 +237,18 @@ class ClientModel():
                 "domain_id": self.domain_id
             }
             response = requests.post(self.url, json=query)
-            actions = np.array(response.json()['action'])[self.chunk_size]
+            actions = np.array(response.json()['action'])[:self.chunk_size]
             self.action_plan.extend(actions.tolist())
         
         action_predict = np.array(self.action_plan.popleft())
+        print(action_predict)
         self.proprio = to_flat_array(proprio) if self.close_loop else action_predict
+        
+        print(self.proprio)
         action_predict = self.post_process(action_predict)
+        
+        print(action_predict)
+        
         return action_predict
     
     def post_process(self, action):
@@ -250,15 +256,15 @@ class ClientModel():
         # action: the model vanilla output 
         action = to_flat_array(action)
         
-        if self.mode == "abs_joint":
+        if self.control_mode == "abs_joint":
             return action
-        elif self.mode == "delta_joint":
+        elif self.control_mode == "delta_joint":
             left_joint = action[0:7] + self.proprio[0:7]
             right_joint = action[7:14] + self.proprio[7:14]
             left_gripper = action[14]
             right_gripper = action[15]
             return np.concatenate([left_joint, right_joint, left_gripper, right_gripper])
-        elif self.mode == "abs_eef":
+        elif self.control_mode == "abs_eef":
             right_xyz = action[0:3]
             right_quat = rotate6d_to_quat(action[3:9])
             right_gripper = action[9]
@@ -266,7 +272,7 @@ class ClientModel():
             left_quat = rotate6d_to_quat(action[13:19])
             left_gripper = action[19]
             return np.concatenate([right_xyz, right_quat, right_gripper, left_xyz, left_quat, left_gripper])
-        elif self.mode == "delta_eef":
+        elif self.control_mode == "delta_eef":
             right_xyz = action[0:3] + self.proprio[0:3]
             right_quat = rotate6d_to_quat(action[3:9])
             right_gripper = action[9]
@@ -453,6 +459,7 @@ def main(args):
                 robot_dds.move_gripper(gripper_states)
             elif "joint" in args.control_mode:
                 action = agent.step(encoded_images, joint_pose_state, current_instruction)
+                
                 print(f"[Step {count}] with action: {action}")
                 if action.shape[0] != 16:
                     print(f"[!] 动作维度不正确 (应为16)，跳过此动作: {action}")
@@ -481,8 +488,8 @@ def main(args):
         if robot_dds:
             print("\n[Main] 重置机器人到安全位置...")
             robot_dds.reset()
-            time.sleep(2)
-            robot_dds.shutdown()
+            # time.sleep(2)
+            # robot_dds.shutdown()
         if camera:
             camera.close()
         print("[Main] 程序已安全退出。")
