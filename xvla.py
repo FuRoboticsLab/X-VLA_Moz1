@@ -449,7 +449,7 @@ class XVLA(nn.Module):
         uvicorn.run(self.app, host=host, port=port)
 
 
-def xvla(device: str = "cuda", 
+def build_xvla(device: str = "cuda", 
          num_actions = 30,
          pretrained: str | None = None, 
          action_mode = 'ee6d', 
