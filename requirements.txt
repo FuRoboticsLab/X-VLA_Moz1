@@ -5,3 +5,9 @@ json_numpy
 torch
 torchvision
 pyarrow
+transformers<=4.48.1
+fastapi
+safetensors
+uvicorn
+timm
+einops

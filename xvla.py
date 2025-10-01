@@ -23,7 +23,6 @@ import logging
 import traceback
 
 import numpy as np
-from regex import P
 import torch
 import torch.nn as nn
 from PIL import Image
@@ -31,7 +30,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 import uvicorn
 from safetensors.torch import load_file
-
+import json_numpy
 from transformers import AutoModelForCausalLM
 from components.transformer import SoftPromptedTransformer
 from components.losses import EE6DLoss, JointLoss, AGIBOTJointLoss
@@ -392,7 +391,7 @@ class XVLA(nn.Module):
                 image_list = []
                 for key in ("image0", "image1", "image2"):
                     if key in payload:
-                        v = payload[key]
+                        v = json_numpy.loads(payload[key])
                         if isinstance(v, (list, np.ndarray)):
                             image_list.append(Image.fromarray(np.array(v)))
                         else:
@@ -403,7 +402,7 @@ class XVLA(nn.Module):
                 )
                 image_inputs = self.image_preprocessor(image_list)
 
-                proprio_np = np.asarray(payload["proprio"], dtype=np.float32)
+                proprio_np = np.asarray(json_numpy.loads(payload["proprio"]), dtype=np.float32)
                 domain_id_val = int(payload["domain_id"])
 
                 to_cuda = (lambda t: t.cuda(non_blocking=True)) if torch.cuda.is_available() else (lambda t: t)

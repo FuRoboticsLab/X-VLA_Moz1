@@ -209,13 +209,15 @@ class ClientModel():
                  port,
                  chunk_size=20,
                  control_mode='abs_eef',
-                 close_loop=False,):
+                 close_loop=False,
+                 domain_id=20):
 
         self.url = f"http://{host}:{port}/act"
         self.reset()
         self.chunk_size = chunk_size
         self.control_mode = control_mode
         self.close_loop = close_loop
+        self.domain_id = domain_id
         
     def reset(self):
         self.proprio = None
@@ -232,6 +234,7 @@ class ClientModel():
                 "image0": json_numpy.dumps(obs['cam_head']),
                 "image1": json_numpy.dumps(obs['cam_left_wrist']),
                 "image2": json_numpy.dumps(obs['cam_right_wrist']),
+                "domain_id": self.domain_id
             }
             response = requests.post(self.url, json=query)
             actions = np.array(response.json()['action'])[self.chunk_size]
@@ -321,7 +324,8 @@ def main(args):
     robot_dds = None
     robot_controller = None
     camera = None
-    agent = ClientModel(args.server_ip, args.server_port, args.chunk_size, args.control_mode, args.close_loop)
+    domain_id = int(args.task_id) + 20  # AGIBOT domain_id is 15
+    agent = ClientModel(args.server_ip, args.server_port, args.chunk_size, args.control_mode, args.close_loop, domain_id=domain_id)
     interval_time = 1.0 / args.control_freq
 
     try:
