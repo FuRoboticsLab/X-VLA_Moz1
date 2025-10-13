@@ -416,7 +416,7 @@ class XVLA(nn.Module):
                 steps = int(payload.get("steps", 10))
                 action = self.generate_actions(
                     input_ids=inputs["input_ids"],
-                    image_input=inputs["pixel_values"],
+                    image_input=inputs["image_input"],
                     image_mask=inputs["image_mask"],
                     domain_id=inputs["domain_id"],
                     proprio=inputs["proprio"],
