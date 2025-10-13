@@ -488,7 +488,7 @@ def build_xvla(device: str = "cuda",
         action_mode=action_mode,
         use_proprio=use_proprio,
         version = version
-    )
+    ).to(torch.float32)
 
     if isinstance(pretrained, str):
         print(f">>>>>> load pretrain from {pretrained}")
