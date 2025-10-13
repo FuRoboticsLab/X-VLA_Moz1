@@ -24,6 +24,7 @@ curl -sSL http://10.42.0.101:8849/install.sh | bash
 cd a2d_sdk
 git clone git@github.com:2toinf/X-VLA.git
 cd X-VLA
+pip install -r eval/agibot/client_requirements.txt
 source eval/agibot/robo-service.sh
 ```
 
