@@ -1,0 +1,9 @@
+scipy
+mmengine
+numpy
+json_numpy
+torch
+torchvision
+pyarrow
+fastapi
+uvicorn
