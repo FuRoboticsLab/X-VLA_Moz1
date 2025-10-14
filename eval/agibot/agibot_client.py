@@ -25,6 +25,8 @@ CAMERA_MAPPING = {
 TASK_INFOS = {
     0: {
         'instruction': "Pick up the object and place it in the bag.",
+        'gripper_threshold': 0.5,
+        'chunk_size': 10,
         'arm_init': [
                     -1.11224556,  0.53719825,  0.45914441, -1.23825192,  0.5959, 1.41219366, -0.08660435,
                     1.07460594, -0.61097687, -0.2804215, 1.28363943, -0.72993356, -1.4951334, 0.18722105,
@@ -43,6 +45,8 @@ TASK_INFOS = {
     },
     1: {
         'instruction': "Pick objects from the conveyor belt and place them in the box.",
+        'gripper_threshold': 0.5,
+        'chunk_size': 10,
         'arm_init': [
                     -1.085, 0.5951, 0.3214, -1.279, 0.7025, 1.479, -0.1656,
                     1.075, -0.6117, -0.2797, 1.282, -0.7310, -1.495, 0.1868,
@@ -62,6 +66,8 @@ TASK_INFOS = {
     },
     2: {
         'instruction': "Hang the snacks on the shelf.",
+        'gripper_threshold': 0.5,
+        'chunk_size': 15,
         'arm_init': [
                     -1.686, 0.9457, 1.330, -0.8735, 0.1478, 1.252, 0.03354,
                     1.815, -0.6138, -1.393, 0.8388, -0.1517, -1.466, -0.06992,
@@ -78,6 +84,8 @@ TASK_INFOS = {
     },
     3: {
         'instruction': "pour the water into the cup.",
+        'gripper_threshold': 0.4,
+        'chunk_size': 40,
         'arm_init': [
                     -1.03729784, 0.58743685, 0.27705365, -1.23694324, 0.70110613, 1.44067192, -0.17989205,
                     1.07420456, -0.611099, -0.27960137, 1.28388369, -0.73043954, -1.49543011, 0.1876224,
@@ -94,6 +102,8 @@ TASK_INFOS = {
     },
     4: {
         'instruction': "Open the microwave, put the food in, and close the microwave.",
+        'gripper_threshold': 0.5,
+        'chunk_size': 30,
         'arm_init': [
                     -1.0742743, 0.61099428, 0.279549, -1.28383136, 0.73043954, 1.49532545, -0.1876224,
                     1.07420456, -0.61097687, -0.2795839, 1.28395355, -0.73038721, -1.49534285, 0.18760496,
@@ -113,6 +123,8 @@ TASK_INFOS = {
     },
     5: {
         'instruction': "fold the clothes",
+        'gripper_threshold': 0.5,
+        'chunk_size': 30,
         'arm_init': [
                     -1.0742219686508179, 0.6111513376235962, 0.27946174144744873, -1.2839535474777222, 0.7303872108459473, 1.495360255241394, -0.18760496377944946,
                     1.0742743015289307, -0.6110466122627258, -0.2794792056083679, 1.2838836908340454, -0.7303697466850281, -1.4952380657196045, 0.18762239813804626,
@@ -155,9 +167,9 @@ class ClientModel():
 
     def step(self, obs, proprio, instruction):
            
-        print(self.domain_id, instruction)
         if not self.action_plan:
-            print(obs['cam_head'].shape)
+            print(self.domain_id, instruction)
+            # print(obs['cam_head'].shape)
             if self.proprio is None: self.proprio = to_flat_array(proprio)
             if self.close_loop: self.proprio = to_flat_array(proprio) 
             query = {
@@ -166,9 +178,15 @@ class ClientModel():
                 "image0": json_numpy.dumps(obs['cam_head']),
                 "image1": json_numpy.dumps(obs['cam_left_wrist']),
                 "image2": json_numpy.dumps(obs['cam_right_wrist']),
-                "domain_id": self.domain_id
+                "domain_id": self.domain_id,
+                "steps": 5
             }
+            start_time = time.time()
+            print("send query")
             response = requests.post(self.url, json=query)
+            print("=======================")
+            print(f"query time: ", time.time() - start_time)
+            print("=======================")
             actions = np.array(response.json()['action'])[:self.chunk_size]
             actions = self.post_process(actions)
             self.action_plan.extend(actions.tolist())
@@ -268,7 +286,10 @@ def main(args):
     robot_controller = None
     camera = None
     domain_id = int(args.task_id) + 20  # AGIBOT domain_id is 15
-    agent = ClientModel(args.server_ip, args.server_port, args.chunk_size, args.control_mode, args.close_loop, domain_id=domain_id)
+    
+    chunk_size = TASK_INFOS[args.task_id]['chunk_size']
+        
+    agent = ClientModel(args.server_ip, args.server_port, chunk_size, args.control_mode, args.close_loop, domain_id=domain_id)
     interval_time = 1.0 / args.control_freq
 
     try:
@@ -297,7 +318,7 @@ def main(args):
         count = 0
         while True:
             time.sleep(interval_time)
-            print("\n" + "="*50)
+            # print("\n" + "="*50)
             
             # --- 2.1. 获取状态和图像 ---
             try:
@@ -332,9 +353,7 @@ def main(args):
                     np.array([right_gripper_state]),
                 ])
 
-                # print(robot_dds.arm_joint_states()[0].shape)
                 joint_pose_state = to_flat_array(robot_dds.arm_joint_states()[0])
-                # print('suc')
                 joint_pose_state = np.concatenate([joint_pose_state, 
                                                    to_flat_array(left_gripper_state), 
                                                    to_flat_array(right_gripper_state)]) # 7+7+1+1=16维
@@ -351,27 +370,24 @@ def main(args):
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             for server_name, sdk_name in CAMERA_MAPPING.items():
                 raw_img, _ = get_and_encode_image(camera, sdk_name)
+                
                 raw_img = cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB) if raw_img is not None else None
-                encoded_images[server_name] = raw_img # we use raw image
-                if raw_img is not None:
-                    print(f"✅ 已获取并编码图像: {server_name}")
-                else:
-                    print(f"⚠️ 无法获取图像: {server_name}")
-                if raw_img is not None:
-                    log_path = os.path.join(LOG_IMAGE_DIR, f"{server_name}_{timestamp}.png")
-                    cv2.imwrite(log_path, raw_img)
-                    latest_path = f"./{server_name}_latest.png"
-                    cv2.imwrite(latest_path, raw_img)
-                    print(f"[Saved] {latest_path}")
+                raw_img = cv2.resize(raw_img, (236, 236))
+                encoded_images[server_name] = cv2.imencode('.jpg', raw_img)[1] # we use raw image
+                # if raw_img is not None:
+                #     print(f"✅ 已获取并编码图像: {server_name}")
+                # else:
+                #     print(f"⚠️ 无法获取图像: {server_name}")
+                # if raw_img is not None:
+                #     log_path = os.path.join(LOG_IMAGE_DIR, f"{server_name}_{timestamp}.png")
+                #     cv2.imwrite(log_path, raw_img)
+                #     latest_path = f"./{server_name}_latest.png"
+                #     cv2.imwrite(latest_path, raw_img)
+                #     print(f"[Saved] {latest_path}")
             
             # --- 2.4. 解析并执行动作 ---
             if "eef" in args.control_mode:
                 action = agent.step(encoded_images, eef_pose_state, current_instruction)
-                print(f"[Step {count}] with action: {action}")
-                if action.shape[0] != 16:
-                    print(f"[!] 动作维度不正确 (应为16)，跳过此动作: {action}")
-                    continue
-
                 left_pose_array, right_pose_array = action[0:8], action[8:16]
                 gripper_states = [left_pose_array[7].item(), right_pose_array[7].item()]
                 left_pose_dict = { "x": left_pose_array[0].item(), 
@@ -396,12 +412,8 @@ def main(args):
                     right_pose=right_pose_dict,
                     left_pose=left_pose_dict,
                 )
-                gripper_states = [35 if x < 0.5 else 120 for x in gripper_states] # to angle
-                robot_dds.move_gripper(gripper_states)
             elif "joint" in args.control_mode:
                 action = agent.step(encoded_images, joint_pose_state, current_instruction)
-                
-                print(f"[Step {count}] with action: {action}")
                 if action.shape[0] != 16:
                     print(f"[!] 动作维度不正确 (应为16)，跳过此动作: {action}")
                     continue
@@ -414,12 +426,16 @@ def main(args):
                         "left_arm": left_joints.tolist(),
                         "right_arm": right_joints.tolist()
                     }
-                )
-                gripper_states = [35 if x < 0.1 else 120 for x in gripper_states] # to angle
-                robot_dds.move_gripper(gripper_states)
+                ) 
             else:
                 print(f"Unsupported control mode: {args.control_mode}")
                 break
+            
+            gripper_threshold = 0.5
+            if 'gripper_threshold' in TASK_INFOS[args.task_id].keys(): 
+                gripper_threshold = TASK_INFOS[args.task_id]['gripper_threshold']
+            gripper_states = [35 if x < gripper_threshold else 120 for x in gripper_states] # to angle
+            robot_dds.move_gripper(gripper_states)
 
     except KeyboardInterrupt:
         print("\n[Main] 用户手动中断程序。")
@@ -440,7 +456,6 @@ if __name__ == "__main__":
     parser.add_argument("--server_ip", type=str, required=True, help="server ip address")
     parser.add_argument("--server_port", type=int, default=8000, help="server port")
     parser.add_argument("--control_mode", type=str, default="abs_eef", choices=["abs_eef", "delta_eef", "abs_joint", "delta_joint"], help="control mode")
-    parser.add_argument("--chunk_size", type=int, default=20, help="number of actions to execute per inference")
     parser.add_argument("--close_loop", action="store_true", help="whether to run in closed-loop mode")
     parser.add_argument('--task_id', type=int, default=0, choices=[0,1,2,3,4,5], help='6 different tasks')
     parser.add_argument('--control_freq', type=int, default=50, help='control frequency (Hz)')

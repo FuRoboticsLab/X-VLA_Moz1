@@ -35,7 +35,6 @@ def decode_image_from_bytes(x) -> Image.Image:
     return Image.fromarray(rgb)
 
 def quat_to_rotate6d(q: np.ndarray, scalar_first = False) -> np.ndarray:
-    print(q)
     return R.from_quat(q, scalar_first = scalar_first).as_matrix()[..., :, :2].reshape(q.shape[:-1] + (6,))
 
 def euler_to_rotate6d(q: np.ndarray, pattern: str = "xyz") -> np.ndarray:

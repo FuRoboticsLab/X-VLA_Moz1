@@ -1,7 +1,6 @@
 python -u -m eval.agibot.agibot_client \
-    --server_ip 172.16.20.67 \
-    --server_port 7890 \
-    --chunk_size 60 \
+    --server_ip 172.19.25.219\
+    --server_port 7000 \
     --control_mode delta_joint \
-    --task_id 1 \
+    --task_id 3 \
     --control_freq 10000
