@@ -3,6 +3,11 @@ Soft-Prompted Transformer as Scalable Cross-Embodiment Vision-Language-Action Mo
 
 [Our paper](https://arxiv.org/pdf/2510.10274) | [Project page](https://thu-air-dream.github.io/X-VLA/)
 
+
+https://github.com/user-attachments/assets/c047bac4-17c3-4d66-8036-badfab2b8c41
+
+
+
 ## Results on Simulations
 We evluate X-VLA across 6 simulations, which encompass hundreds of evaluation setups, spanning single-arm, bi-manual robotic systems, autonomous driving, and assessing diverse axes of generalization, including cross-embodiment, cross-environment, and cross-task adaptation.
 
