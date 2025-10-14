@@ -11,7 +11,7 @@ https://github.com/user-attachments/assets/c047bac4-17c3-4d66-8036-badfab2b8c41
 
 ## Quick Start 
 
-** !!!!! ALL code details and guidance will be released in one month!!!!!**
+**ALL code details and guidance will be released in one month**
 
 
 
