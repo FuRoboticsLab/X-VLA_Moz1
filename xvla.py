@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 from json import encoder
-
+import time
 from typing import Any, Dict, Tuple
 
 import logging
@@ -35,7 +35,7 @@ from transformers import AutoModelForCausalLM
 from components.transformer import SoftPromptedTransformer
 from components.losses import EE6DLoss, JointLoss, AGIBOTJointLoss
 from components.preprocessor import LanguagePreprocessor, ImagePreprocessor
-
+import cv2
 LOSS_HUB = {
     "ee6d": EE6DLoss,
     "joint": JointLoss,
@@ -331,6 +331,7 @@ class XVLA(nn.Module):
         Tensor, shape [B, T=num_actions, dim_action]
             Predicted action sequence; sigmoid applied only on gripper channels.
         """
+        start_time = time.time()
         self.eval()
         enc = self.forward_vlm(input_ids=input_ids, pixel_values=image_input, image_mask=image_mask)
 
@@ -353,6 +354,7 @@ class XVLA(nn.Module):
             )
         idx = self.criterion.GRIPPER_IDX
         action[..., idx] = torch.sigmoid(action[..., idx])
+        print("infer time:", time.time() - start_time)
         return action
 
     # ------------------------------ minimal service -------------------------
@@ -392,7 +394,10 @@ class XVLA(nn.Module):
                 for key in ("image0", "image1", "image2"):
                     if key in payload:
                         v = json_numpy.loads(payload[key])
-                        if isinstance(v, (list, np.ndarray)):
+                        if isinstance(v, np.ndarray) and v.ndim == 1:
+                            v = cv2.imdecode(v, cv2.IMREAD_COLOR)
+                            image_list.append(Image.fromarray(v))
+                        elif isinstance(v, (list, np.ndarray)):
                             image_list.append(Image.fromarray(np.array(v)))
                         else:
                             image_list.append(Image.open(v))
