@@ -20,6 +20,8 @@ To leverage the heterogeneity of large-scale robot datasets, **X-VLA** introduce
 
 The resulting architecture — **X-VLA-0.9B** — achieves **state-of-the-art generalization** across six simulation platforms and three real-world robots, surpassing prior VLA approaches in dexterity, adaptability, and efficiency.
 
+https://github.com/user-attachments/assets/c047bac4-17c3-4d66-8036-badfab2b8c41
+
 ---
 
 ## 🚀 Quick Start: Installation & Deployment
