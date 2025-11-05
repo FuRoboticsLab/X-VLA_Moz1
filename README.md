@@ -59,7 +59,7 @@ This design avoids package conflicts and supports distributed inference across G
 | [`2toINF/X-VLA-Google-Robot`](https://huggingface.co/2toINF/X-VLA-Google-Robot)                    | Google Robot      | Aligned with large-scale Google Robot dataset for multi-skill generalization.                    | **80.4%(VM) 75.7%(VA)**        | to be update       |
 | [`2toINF/X-VLA-Libero`](https://huggingface.co/2toINF/X-VLA-Libero)                                | LIBERO            | Fine-tuned on LIBERO benchmark for manipulation via multimodal prompts.                         | **98.1%**        | to be update         |
 | [`2toINF/X-VLA-RoboTwin2`](https://huggingface.co/2toINF/X-VLA-RoboTwin2)                          | RoboTwin2         | Trained on RoboTwin2 sim2real dataset for dual-arm coordinated manipulation.                     | **70%**        | to be update |
-| [`2toINF/X-VLA-Simpler-WidowX`](https://huggingface.co/2toINF/X-VLA-WidowX)                | WidowX  | Fine-tuned on BridgeDataV2 (Simpler benchmark).                                                  | **95.8%**        | [Simpler Eval](evaluation/simpler/WidowX/README.md) |
+| [`2toINF/X-VLA-Simpler-WidowX`](https://huggingface.co/2toINF/X-VLA-WidowX)                | WidowX  | Fine-tuned on BridgeDataV2 (Simpler benchmark).                                                  | **95.8%**        | [Simpler Eval](evaluation/simpler/README.md) |
 | [`2toINF/X-VLA-SoftFold`](https://huggingface.co/2toINF/X-VLA-SoftFold)                            | SoftFold          | Specialized in deformable object manipulation (e.g., folding and cloth control).                 | cloth folding with a 100% success rate in 2 hours.  |  to be update   |
 
 ---
