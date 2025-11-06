@@ -58,7 +58,7 @@ This design avoids package conflicts and supports distributed inference across G
 | [`2toINF/X-VLA-Libero`](https://huggingface.co/2toINF/X-VLA-Libero)                                | Franka            | Fine-tuned on LIBERO benchmark                     | **98.1%**        | to be update         |
 | [`2toINF/X-VLA-RoboTwin2`](https://huggingface.co/2toINF/X-VLA-RoboTwin2)                          | Agilex        | Trained on RoboTwin2 dataset for dual-arm coordinated manipulation(50 demos for each task).                     | **70%**        | to be update |
 | [`2toINF/X-VLA-Simpler-WidowX`](https://huggingface.co/2toINF/X-VLA-WidowX)                | WidowX  | Fine-tuned on BridgeDataV2 (Simpler benchmark).                                                  | **95.8%**        | [Simpler Eval](evaluation/simpler/README.md) |
-| [`2toINF/X-VLA-SoftFold`](https://huggingface.co/2toINF/X-VLA-SoftFold)                            | Agilex          | Fine-tuned on Soft-Fold Dataset. Specialized in deformable object manipulation (e.g., folding and cloth control).                 | cloth folding with a 100% success rate in 2 hours.  |  to be update   |
+| [`2toINF/X-VLA-SoftFold`](https://huggingface.co/2toINF/X-VLA-SoftFold)                            | Agilex          | Fine-tuned on Soft-Fold Dataset. Specialized in deformable object manipulation (e.g., folding and cloth control).                 | cloth folding with a 100% success rate in 2 hours.  |  [SoftFold-Agilex](evaluation/SoftFold-Agilex/readme.md)   |
 
 ---
 
