@@ -25,7 +25,7 @@ pip install -e .
 Run the X-VLA model as an inference server (in a clean environment to avoid dependency conflicts):
 ```bash
 conda activate X-VLA
-python -m x_vla.deploy \
+python -m deploy \
   --model_path 2toINF/X-VLA-Libero \
   --host 0.0.0.0 \
   --port 8000
