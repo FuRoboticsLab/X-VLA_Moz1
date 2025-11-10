@@ -40,7 +40,7 @@ Launch the LIBERO evaluation client to connect to your X-VLA server:
 ```bash
 cd evaluation/libero
 conda activate libero
-python eval/libero/libero_client.py \
+python libero_client.py \
     --task_suites libero_spatial libero_goal libero_object libero_10 \
     --host 0.0.0.0 \
     --port 12321 \
