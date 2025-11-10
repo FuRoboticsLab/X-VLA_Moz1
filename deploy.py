@@ -33,6 +33,8 @@ def main():
                         help="Device to load model on (cuda / cpu / auto)")
     parser.add_argument("--port", default=8000, type=int,
                         help="Port number for FastAPI server")
+    parser.add_argument("--host", default="0.0.0.0", type=str,
+                        help="Host address for FastAPI server")
 
     args = parser.parse_args()
     os.makedirs(args.output_dir, exist_ok=True)
@@ -93,10 +95,10 @@ def main():
         try:
             host = ".".join(node_list.split("-")[1:]) if "-" in node_list else node_list
         except Exception:
-            host = "0.0.0.0"
+            host = args.host
     else:
         print("\n⚠️  No SLURM environment detected, defaulting to 0.0.0.0")
-        host = "0.0.0.0"
+        host = args.host
 
     # --------------------------------------------------------------------------
     # Write info.json for bookkeeping (safe version)
