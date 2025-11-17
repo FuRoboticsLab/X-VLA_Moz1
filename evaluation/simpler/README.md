@@ -11,6 +11,7 @@ The evaluation follows [SimplerEnv](https://github.com/255isWhite/SimplerEnv), w
 # Make sure X-VLA has been correctly installed before this
 conda activate XVLA
 git clone https://github.com/255isWhite/SimplerEnv.git --recurse-submodules
+realpath SimplerEnv # copy this path as simpler_env_path, it will be used for Google Robot evaluation
 cd SimplerEnv/ManiSkill2_real2sim
 pip install -e .
 cd ..
@@ -21,25 +22,41 @@ pip install -e .
 
 ---
 
-### 2️⃣ Launch X-VLA Server
+### 2️⃣ Launch X-VLA Server (The **first** terminal for server)
 
 ```bash
-# First terminal
 cd X-VLA
+
+# for WidowX
 python deploy.py \
     --model_path 2toINF/X-VLA-WidowX \
     --host 0.0.0.0 \
     --port 8000
+
+# for Goole Robot
+python deploy.py \
+    --model_path 2toINF/X-VLA-Google-Robot \
+    --host 0.0.0.0 \
+    --port 8000
 ```
+*(Change the port accordingly.)*
 
 ---
 
-### 3️⃣ Run Client Evaluation
+### 3️⃣ Run Client Evaluation (The **second** terminal for client)
 
 ```bash
-# Second terminal
+# for WidowX
 cd X-VLA/evaluation/simpler/WidowX
-python client.py --server_ip 127.0.0.1 --server_port 8000
+# choose task from client_spoon/client_carrot/client_blocks/client_eggplant
+python client_spoon.py --server_ip 127.0.0.1 --server_port 8000
+
+# for Goole Robot
+# choose settings from google-VM/google-VA
+cd X-VLA/evaluation/simpler/google-VM
+# choose task from client_coke_can/client_move_near/client_open_close/client_place_in
+export SIMPLER_DIR=path/to/SimplerEnv
+python client_coke_can.py --server_ip 127.0.0.1 --server_port 8000
 ```
 
 This client:
@@ -53,9 +70,26 @@ This client:
 
 ## 📊 Results on Simpler Benchmark
 
-| **Visual Matching (Google)** |          |          |         | **Avg.** | **Visual Aggregation (Google)** |          |          |         | **Avg.** | **Visual Matching (WidowX)** |            |            |              | **Avg.** |
-| :--------------------------: | :------: | :------: | :-----: | :------: | :-----------------------------: | :------: | :------: | :-----: | :------: | :--------------------------: | :--------: | :--------: | :----------: | :------: |
-|           **Coke**           | **Near** | **Open** | **Put** | **80.4** |             **Coke**            | **Near** | **Open** | **Put** | **75.7** |           **Spoon**          | **Carrot** | **Blocks** | **Eggplant** | **95.8** |
-|             98.3             |   97.1   |   69.5   |   56.5  | **80.4** |               85.5              |   79.8   |   61.9   |   75.7  | **75.7** |              100             |    91.7    |    95.8    |     95.8     | **95.8** |
+### WidowX (Visual Matching)
+
+| **Spoon** | **Carrot** | **Blocks** | **Eggplant** | **Avg.** |
+| :-------: | :--------: | :--------: | :-----------: | :------: |
+|**100**|**91.7**|**95.8**| **95.8**  | **95.8** |
+
+### Google RT1 (Visual Matching)
+
+| **Coke** | **Near** | **Open** | **Place** | **Avg.** |
+| :------: | :------: | :------: | :-----: | :------: |
+| **98.3** | **97.5** | **74.5** | **63.8** | **83.5** |
 
 
+### Google RT1 (Visual Aggregation)
+
+| **Coke** | **Near** | **Open** | **Place** | **Avg.** |
+| :------: | :------: | :------: | :-----: | :------: |
+| **87.3** | **84.0** | **64.2** | **70.3** | **76.4** |
+
+
+
+---
+*The SIMPLER benchmark currently has uncontrollable randomness, so results may vary even with the same settings. We are fixing this, and our reported numbers are taken from the best rollout.*

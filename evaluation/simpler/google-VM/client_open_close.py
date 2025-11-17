@@ -27,7 +27,7 @@ from pathlib import Path
 
 SIMPLER_DIR = os.getenv("SIMPLER_DIR", "/default/path/if/not/set")
 
-CONFIG_PATH = Path(__file__).parent / "configs/move_near.json"
+CONFIG_PATH = Path(__file__).parent / "configs/open_close.json"
 
 def _apply_env_placeholders(obj):
     if isinstance(obj, dict):
@@ -129,7 +129,7 @@ class XVLAClient:
         action_final = np.concatenate([
             action_pred[:3],
             rotate6D_to_euler_xyz(action_pred[3:9]),
-            np.array([1.0 if action_pred[9] > 0.25 else -1.0])
+            np.array([1.0 if action_pred[9] > 0.35 else -1.0])
         ])
         self.current_xyz = action_final[:3]
         return action_final
@@ -282,7 +282,7 @@ def main():
                         help="Manual server IP (if not using connection_info)")
     parser.add_argument("--server_port", type=int, default=None,
                         help="Manual server port (if not using connection_info)")
-    parser.add_argument("--output_dir", type=str, default="logs/move_near/",
+    parser.add_argument("--output_dir", type=str, default="logs/open_close/",
                         help="Directory for saving evaluation videos and logs")
     args = parser.parse_args()
 

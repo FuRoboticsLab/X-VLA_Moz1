@@ -93,7 +93,7 @@ class XVLAClient:
         action_final = np.concatenate([
             action_pred[:3],
             rotate6D_to_euler_xyz(action_pred[3:9]) + np.array([0, math.pi / 2, 0]),
-            np.array([1 if action_pred[9] < 0.95 else -1])
+            np.array([1.0 if action_pred[9] < 0.7 else -1.0])
         ])
         return action_final
 
@@ -108,87 +108,80 @@ def evaluate_policy_widowx(client, output_dir: str, proc_id: int, max_steps: int
     os.makedirs(output_dir, exist_ok=True)
     log_path = os.path.join(output_dir, "widowx_results.txt")
 
-    tasks = [
-        "widowx_spoon_on_towel",
-        "widowx_carrot_on_plate",
-        "widowx_stack_cube",
-        "widowx_put_eggplant_in_basket",
-    ]
+    task = "widowx_spoon_on_towel"
 
     summary = []
     start_time_total = time.time()
 
-    for task_idx, task in enumerate(tasks):
-        print("\n" + "=" * 70)
-        print(f"🧩 [Eval {task_idx+1}/{len(tasks)}] Task: {task} | Proc ID: {proc_id}")
-        print("=" * 70)
+    print("\n" + "=" * 70)
+    print(f"🧩 Eval Task: {task} | Proc ID: {proc_id}")
+    print("=" * 70)
 
-        try:
-            images = []
-            env = simpler_env.make(task)
-            obs, _ = env.reset(options={"obj_init_options": {"episode_id": proc_id}})
-            instruction = env.get_language_instruction()
+    try:
+        images = []
+        env = simpler_env.make(task)
+        obs, _ = env.reset(options={"obj_init_options": {"episode_id": proc_id}})
+        instruction = env.get_language_instruction()
 
-            # Compute EE pose wrt base
-            ee_pose_wrt_base = Pose(
-                p=obs["agent"]["base_pose"][:3],
-                q=obs["agent"]["base_pose"][3:]
-            ).inv() * Pose(
-                p=obs["extra"]["tcp_pose"][:3],
-                q=obs["extra"]["tcp_pose"][3:]
-            )
+        # Compute EE pose wrt base
+        ee_pose_wrt_base = Pose(
+            p=obs["agent"]["base_pose"][:3],
+            q=obs["agent"]["base_pose"][3:]
+        ).inv() * Pose(
+            p=obs["extra"]["tcp_pose"][:3],
+            q=obs["extra"]["tcp_pose"][3:]
+        )
 
-            # Compose proprio
-            proprio = torch.from_numpy(np.concatenate(
-                [ee_pose_wrt_base.p, np.array([1, 0, 0, 1, 0, 0, 0])]
-            )).to(dtype=torch.float32)
-            proprio = torch.cat([proprio, torch.zeros_like(proprio)], dim=-1).numpy()
+        # Compose proprio
+        proprio = torch.from_numpy(np.concatenate(
+            [ee_pose_wrt_base.p, np.array([1, 0, 0, 1, 0, 0, 0])]
+        )).to(dtype=torch.float32)
+        proprio = torch.cat([proprio, torch.zeros_like(proprio)], dim=-1).numpy()
 
-            # Reset XVLA client
-            client.reset(proprio, instruction)
+        # Reset XVLA client
+        client.reset(proprio, instruction)
 
-            # === Run environment loop ===
-            task_start = time.time()
-            for step_idx in range(max_steps):
-                image = get_image_from_maniskill2_obs_dict(env, obs)
-                action = client.step(image)
-                obs, reward, done, _, _ = env.step(action)
-                images.append(image.copy())
+        # === Run environment loop ===
+        task_start = time.time()
+        for step_idx in range(max_steps):
+            image = get_image_from_maniskill2_obs_dict(env, obs)
+            action = client.step(image)
+            obs, reward, done, _, _ = env.step(action)
+            images.append(image.copy())
 
-                if done:
-                    print(f"✅ Task {task} completed in {step_idx+1} steps (suc={done})")
-                    break
-            # === Save video & log ===
-            duration = time.time() - task_start
-            out_video = os.path.join(output_dir, f"{task}_{proc_id}_{done:.2f}.mp4")
-            write_video(out_video, images, fps=10)
+            if done:
+                print(f"✅ Task {task} completed in {step_idx+1} steps (suc={done})")
+                break
+        # === Save video & log ===
+        duration = time.time() - task_start
+        out_video = os.path.join(output_dir, f"{task}_{proc_id}_{done:.2f}.mp4")
+        write_video(out_video, images, fps=10)
 
-            result = {
+        result = {
+            "task": task,
+            "reward": float(reward),
+            "done": bool(done),
+            "steps": step_idx + 1,
+            "duration_sec": duration,
+            "output": out_video,
+            "proc_id": proc_id,
+        }
+        summary.append(result)
+
+        with open(log_path, "a+") as f:
+            f.write(json.dumps(result) + "\n")
+
+        print(f"🎥 Saved video to {out_video}")
+        print(f"🕒 Task duration: {duration:.1f}s")
+
+    except Exception as e:
+        print(f"❌ Error during task {task}: {e}")
+        with open(log_path, "a+") as f:
+            f.write(json.dumps({
                 "task": task,
                 "proc_id": proc_id,
-                "reward": float(reward),
-                "done": bool(done),
-                "steps": step_idx + 1,
-                "duration_sec": duration,
-                "output": out_video,
-            }
-            summary.append(result)
-
-            with open(log_path, "a+") as f:
-                f.write(json.dumps(result) + "\n")
-
-            print(f"🎥 Saved video to {out_video}")
-            print(f"🕒 Task duration: {duration:.1f}s")
-
-        except Exception as e:
-            print(f"❌ Error during task {task}: {e}")
-            with open(log_path, "a+") as f:
-                f.write(json.dumps({
-                    "task": task,
-                    "proc_id": proc_id,
-                    "error": str(e)
-                }) + "\n")
-            continue  # Move to next task
+                "error": str(e)
+            }) + "\n")
 
     # === Summary ===
     total_time = time.time() - start_time_total
@@ -261,7 +254,7 @@ if __name__ == "__main__":
     print(f"📁 Results and videos will be saved to: {os.path.abspath(args.output_dir)}")
 
     for proc_id in range(24):
-        print(f"\n--- 🧩 Starting evaluation process {proc_id + 1}/24 ---")
+        print(f"\n--- 🧩 Starting evaluation process {proc_id}/24 ---")
         try:
             evaluate_policy_widowx(client, args.output_dir, proc_id)
         except KeyboardInterrupt:
