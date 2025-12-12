@@ -16,6 +16,7 @@ import json_numpy
 import numpy as np
 import requests
 from scipy.spatial.transform import Rotation as R
+from scipy.interpolate import interp1d
 import torch  # noqa: F401  # (kept in case of future GPU array ops)
 # import torchvision.transforms as transforms  # noqa: F401
 # from tqdm import tqdm
@@ -23,6 +24,32 @@ from utils import euler_to_rotate6d, rotate6d_to_xyz
 
 # moz1 control
 from mozrobot import MOZ1Robot,MOZ1RobotConfig
+
+def smooth_action(action_plan, in_freq=30, out_freq=120, trajectory_type="linear"):
+
+    assert len(action_plan) == in_freq and out_freq % in_freq == 0
+    num_steps = out_freq // in_freq
+    smooth_action_plan = []
+
+    for i in range(len(action_plan)):
+        if i == 0:
+            start = np.zeros_like(action_plan[0])
+        else:
+            start = action_plan[i - 1]
+        end = action_plan[i]
+        for j in range(num_steps):
+            if trajectory_type == "cosine":
+                # Smooth cosine interpolation
+                alpha = 0.5 * (1 - np.cos(np.pi * (j+1) / (num_steps)))
+            elif trajectory_type == "cubic":
+                # Cubic easing
+                t = (j+1) / (num_steps)
+                alpha = t * t * (3 - 2 * t)
+            else:  # linear
+                alpha =(j+1) / (num_steps)
+            smooth_action_plan.append(start + alpha * (end - start))
+    
+    return smooth_action_plan
 
 class ClientModel:
     """Thin HTTP client that queries a remote policy server and returns actions."""
@@ -50,9 +77,18 @@ class ClientModel:
             raise RuntimeError(f"Unexpected action shape from server: {action.shape}")
         return action
     
-
 class MozExecutor:
-    def __init__(self, policy, instruction=None, ctrl_freq=120, ctrl_mode="abs", camera=True):
+    def __init__(self, policy, instruction=None, ctrl_freq=120, ctrl_mode="abs", camera=True, infer_thres=0):
+        """
+        The Executor for MozRobot. It gets the observation and sent to the XVLA server and then rollout the action.
+        Args:
+            policy: the instance of `class ClientModel`
+            instruction: the text you want the robot to execute
+            ctrl_freq: the control freq
+            ctrl_mode: [abs, delta], delta will output delta action
+            camera: whether camera is connected.
+            infer_thres: when the remaining action step is less than thres, post the server to get new action.
+        """
         if camera:
             config = MOZ1RobotConfig(
                 realsense_serials="235422301820, 230322276191, 230422272019",
@@ -80,22 +116,23 @@ class MozExecutor:
         self.policy = policy
         self.instruction = instruction
         self.getting_action_flag = 0
+        self.infer_thres = infer_thres
 
     async def rollout(self, instruction=None):
         if instruction is not None:
             self.instruction = instruction
+        self.get_policy_action()
         try:
             while 1:
-                if self.action_plan:
-                    self.getting_action_flag = 0
-                    action = self.action_plan.popleft()
-                    self.robot.send_action(action)
-                else:
-                    if not self.getting_action_flag:
-                        self.getting_action_flag = 1
-                        asyncio.create_task(self.get_policy_action())
-                await asyncio.sleep(self.time_interval)
-
+                start = time.time()
+                if len(self.action_plan) <= self.infer_thres and not self.getting_action_flag:
+                    asyncio.create_task(self.get_policy_action())
+                
+                action = self.action_plan.popleft()
+                end = time.time()
+                await asyncio.sleep(self.time_interval-(end-start))
+                self.robot.send_action(action)
+                
         finally:
             self.robot.disconnect()
         
@@ -103,7 +140,9 @@ class MozExecutor:
         self.robot.reset_robot_positions()
     
     async def get_policy_action(self):
+        self.getting_action_flag = 1
         # test asyncio
+
         obs = self.robot.capture_observation()
 
         # formulate proprio input
@@ -125,6 +164,8 @@ class MozExecutor:
         payload["steps"] = 10 # denoising steps
 
         raw_action_plan = self.policy.post(payload)
+
+        raw_action_plan = smooth_action(raw_action_plan)
         
         if self.ctrl_mode == "delta":
             idx = np.array([0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18])
@@ -151,6 +192,7 @@ class MozExecutor:
                 "rightarm_gripper_cmd_pos": right_grip,
             }
             self.action_plan.append(action_dict)
+        self.getting_action_flag = 0
         return
     
     def get_observation(self):
@@ -173,7 +215,6 @@ if __name__ == "__main__":
     test = MozExecutor(policy, ctrl_freq=1)
     asyncio.run(test.rollout("Fold the blue t-shirt."))
 
-
     # test offline movement
     from copy import deepcopy
     test = MozExecutor(None, camera=True)
@@ -192,6 +233,3 @@ if __name__ == "__main__":
         test.action_plan.append(cmd)
     
     asyncio.run(test.rollout())
-    
-
-
