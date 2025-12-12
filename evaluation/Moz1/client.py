@@ -127,11 +127,13 @@ class MozExecutor:
                 start = time.time()
                 if len(self.action_plan) <= self.infer_thres and not self.getting_action_flag:
                     asyncio.create_task(self.get_policy_action())
-                
-                action = self.action_plan.popleft()
-                end = time.time()
-                await asyncio.sleep(self.time_interval-(end-start))
-                self.robot.send_action(action)
+                try:
+                    action = self.action_plan.popleft()
+                    end = time.time()
+                    await asyncio.sleep(self.time_interval-(end-start))
+                    self.robot.send_action(action)
+                except:
+                    pass
                 
         finally:
             self.robot.disconnect()
