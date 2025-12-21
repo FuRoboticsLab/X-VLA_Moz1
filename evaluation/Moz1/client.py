@@ -1,5 +1,4 @@
 # --------editing by cyn----------
-from __future__ import annotations
 
 import argparse
 import asyncio
@@ -14,6 +13,7 @@ from typing import Deque, Dict, Iterable, List, Optional, Tuple
 
 import json_numpy
 import numpy as np
+import pickle
 import requests
 from scipy.spatial.transform import Rotation as R
 from scipy.interpolate import interp1d
@@ -135,9 +135,17 @@ class MozExecutor:
         self.infer_thres = (action_dur - infer_interval) * ctrl_freq
         self.action_dur = action_dur
         self.action_decay = action_decay
+        self.action_length = 30
+
+        # monitor command from model
+        self.need_monitor = True
+        self.max_monitor_length = 1000
+        self.action_dim = 6
+        self.all_command = np.zeros((self.max_monitor_length, self.max_monitor_length+self.action_length, self.action_dim))
+        self.global_timestep = 0
 
     async def rollout(self, instruction=None):
-        asyncio.create_task(self.monitor())
+        # asyncio.create_task(self.monitor())
         if instruction is not None:
             self.instruction = instruction
         await self.get_policy_action()
@@ -186,6 +194,7 @@ class MozExecutor:
                     }
                     
                     self.robot.send_action(action_dict)
+                    self.global_timestep += 1
                     self.current_action = action_dict
                         
                     
@@ -221,6 +230,7 @@ class MozExecutor:
         await self.action_plan_lock.acquire()
         obs = self.robot.capture_observation()
         start_action_length = len(self.action_plan)
+        current_time_step = self.global_timestep
         self.action_plan_lock.release()
 
         # formulate proprio input
@@ -262,6 +272,13 @@ class MozExecutor:
         if self.ctrl_mode == "delta":
             idx = np.array([0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18])
             raw_action_plan[:, idx] += obs["proprio"][idx]
+        
+        if self.need_monitor and current_time_step < self.max_monitor_length:
+            # for now we only monitor left_pose
+            self.all_command[current_time_step, current_time_step: current_time_step+self.action_length, :] = left_pose
+        elif self.need_monitor and current_time_step >= self.max_monitor_length:
+            with open("record.pkl", "wb") as f:
+                pickle.dump(self.all_command, f)
 
         await self.action_plan_lock.acquire()
         # infer_thres               |          *    =6
@@ -289,7 +306,6 @@ class MozExecutor:
     
     async def monitor(self):
         await asyncio.sleep(1)
-        import pickle
         save_interval = 100
         time_interval = 0.1
         count = 0
