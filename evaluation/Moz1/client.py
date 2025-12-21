@@ -139,15 +139,16 @@ class MozExecutor:
 
         # monitor command from model
         self.need_monitor = True
-        self.max_monitor_length = 1000
+        self.max_monitor_length = 2000
         self.action_dim = 6
-        self.all_command = np.zeros((self.max_monitor_length, self.max_monitor_length+self.action_length, self.action_dim))
+        self.all_command = np.zeros((self.max_monitor_length, self.max_monitor_length+1+120*action_dur, self.action_dim))
+        self.all_state = np.zeros((self.max_monitor_length, self.action_dim))
         self.global_timestep = 0
 
     async def rollout(self, instruction=None):
-        # asyncio.create_task(self.monitor())
         if instruction is not None:
             self.instruction = instruction
+            self.global_timestep = 0
         await self.get_policy_action()
         last_left_grip = 0.12
         last_right_grip = 0.12
@@ -160,6 +161,14 @@ class MozExecutor:
                     get_action_task = asyncio.create_task(self.get_policy_action())
                 
                 try:
+                    if self.need_monitor and self.global_timestep < self.max_monitor_length:
+                        saved = False
+                        obs = self.robot.capture_robot_observation()
+                        self.all_state[self.global_timestep] = obs["leftarm_state_cart_pos"]
+                    elif self.need_monitor and self.global_timestep > self.max_monitor_length and not saved:
+                        with open("record_state.pkl", "wb") as f:
+                            pickle.dump(self.all_state, f)
+                        saved = True
                     if len(self.action_plan) > self.infer_thres:
                         self.getting_action_flag = 0
                     # else:
@@ -171,8 +180,7 @@ class MozExecutor:
                     self.action_plan_lock.release()
                     left_arm = action[:10]
                     right_arm = action[10:]
-                    print(f"Left Grip: {left_arm[9]}, Right Grip: {right_arm[9]}", f"time cost: {time.time() - start}", end="\t")
-                    second_start = time.time()
+                    print(f"Left Grip: {left_arm[9]}, Right Grip: {right_arm[9]}")
                     # change to 6D Pose + Gripper
                     left_pose = left_arm[:3]
                     left_ori = rotate6d_to_xyz(left_arm[3:9])
@@ -195,7 +203,7 @@ class MozExecutor:
                     
                     self.robot.send_action(action_dict)
                     self.global_timestep += 1
-                    self.current_action = action_dict
+                    
                         
                     
                     # if np.abs(left_grip-last_left_grip) > 0.06 or np.abs(right_grip-last_right_grip) > 0.06:
@@ -206,9 +214,7 @@ class MozExecutor:
                     print(e)
                     self.action_plan_lock.release()
                 finally:
-                    print(f"2 time cost: {time.time() - second_start}")
                     await asyncio.sleep(self.time_interval)
-                    print(f"2 time cost: {time.time() - second_start}")
                 
         finally:
             self.robot.disconnect()
@@ -274,11 +280,21 @@ class MozExecutor:
             raw_action_plan[:, idx] += obs["proprio"][idx]
         
         if self.need_monitor and current_time_step < self.max_monitor_length:
+            saved = False
             # for now we only monitor left_pose
-            self.all_command[current_time_step, current_time_step: current_time_step+self.action_length, :] = left_pose
-        elif self.need_monitor and current_time_step >= self.max_monitor_length:
-            with open("record.pkl", "wb") as f:
+            leftarm_actions = []
+            for action in raw_action_plan:
+                left_arm = action[:10]
+                left_pose = left_arm[:3]
+                left_ori = rotate6d_to_xyz(left_arm[3:9])
+                left_arm = np.concatenate([left_pose, left_ori])
+                leftarm_actions.append(left_arm)
+            leftarm_actions = np.asarray(leftarm_actions)
+            self.all_command[current_time_step, current_time_step+1: current_time_step+1+len(leftarm_actions), :] = leftarm_actions
+        elif self.need_monitor and current_time_step >= self.max_monitor_length and not saved:
+            with open("record_action.pkl", "wb") as f:
                 pickle.dump(self.all_command, f)
+            saved = True
 
         await self.action_plan_lock.acquire()
         # infer_thres               |          *    =6
@@ -428,7 +444,7 @@ if __name__ == "__main__":
     # real execution
     policy = ClientModel("10.176.56.103", "8000")
 
-    test = MozExecutor(policy, ctrl_freq=120, ctrl_mode="delta", action_dur=3, infer_interval=3)
+    test = MozExecutor(policy, ctrl_freq=120, ctrl_mode="delta", action_dur=3, infer_interval=2)
     asyncio.run(test.rollout("Fold the red t-shirt."))
 
     # test offline movement
